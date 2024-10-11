@@ -50,6 +50,9 @@ class SeleniumHelper:
     def switch_window(self, tab: int):
         self.driver.switch_to.window(self.driver.window_handles[tab])
 
+    def get_open_windows_length(self):
+        return len(self.driver.window_handles)
+
     def close_window(self):
         self.driver.close()
 
