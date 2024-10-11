@@ -46,6 +46,7 @@ class SeleniumHelper:
 
     def load_page(self, url: str):
         self.driver.get(url)
+        self.wait()
 
     def switch_window(self, tab: int):
         self.driver.switch_to.window(self.driver.window_handles[tab])
