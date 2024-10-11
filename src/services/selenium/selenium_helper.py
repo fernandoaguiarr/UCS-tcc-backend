@@ -3,11 +3,8 @@ import time
 
 from pydantic import UUID4
 from selenium import webdriver
-from selenium.common import ElementNotInteractableException
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.chrome.options import Options
 
 
 def get_browser_options(state_manager_id: UUID4) -> Options:
