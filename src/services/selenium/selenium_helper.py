@@ -88,9 +88,3 @@ class SeleniumHelper:
 
         # Se o timeout for atingido e o download não tiver sido concluído
         return False
-#
-# class FormInteractionHelper:
-#
-#     def change_element_style(self, element, style_property, value):
-#         script = f"arguments[0].style.{style_property} = '{value}';"
-#         self.driver.execute_script(script, element)

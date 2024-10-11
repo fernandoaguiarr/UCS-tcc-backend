@@ -35,17 +35,6 @@ class WebInteractionHelper(SeleniumHelper):
             expected_conditions.presence_of_all_elements_located((By.XPATH, xpath))
         )
 
-    def click_option(self, parent_element: WebElement, option):
-
-        self.click(parent_element)
-
-        value = option["value"] if option["value"] else option["label"]
-        option_element = self.wait_for_element_presence_by_xpath(
-            f".//*[contains(@class, '{option["class"]}') and contains(., '{value}')]"
-        )
-
-        self.click(option_element)
-
     def remove_css_classes(self, element: WebElement):
         self.driver.execute_script("arguments[0].className = '';", element)
 
