@@ -14,11 +14,17 @@ class WebInteractionHelper(SeleniumHelper):
         super().__init__(state_manager_id)
 
     @staticmethod
-    def click(element: WebElement):
+    def click(element: WebElement) -> bool:
         try:
             element.click()
+            return True
         except ElementNotInteractableException:
-            pass
+            return False
+
+    @staticmethod
+    def fill_input_field(element: WebElement, value):
+        element.clear()
+        element.send_keys(value)
 
     def wait_for_element_presence_by_id(self, element_id: str, timeout: float = 10):
         return WebDriverWait(self.driver, timeout).until(
