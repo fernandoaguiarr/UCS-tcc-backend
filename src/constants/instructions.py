@@ -1,71 +1,52 @@
 HTML_FILTER_ANALYSIS_INSTRUCTION = """
-Analyze the provided HTML form elements and return their attributes and options in a consistent JSON format.
+Analyze the provided HTML form elements and return their attributes, options, and the field type in a consistent JSON format.
 
 ### Structure to follow:
 
 - For each form element, return:
-    - `attributes`: A dictionary containing all attributes of the element (e.g., id, class, name, type, placeholder, etc.).
-    - `options`: A list containing all available options for dropdowns or multiselects (with label, value, disabled status, and CSS class).
+  - `field_type`: A string that indicates whether the element is a "select", "multiselect", or a specific `input` type (e.g., "text", "email", "checkbox").
+  - `attributes`: A dictionary containing all attributes of the element (e.g., id, class, name, type, placeholder, etc.).
+  - `options`: A list containing all available options for dropdowns or multiselects (with label, value, disabled status, and CSS class).
 
 ### Guidelines:
 
-1. Always return both `attributes` and `options` keys, even if one of them is empty.
-2. Ensure `attributes` contains all relevant HTML attributes, like:
-    - id
-    - class
-    - name
-    - type
-    - placeholder
-    - maxlength
-    - min, max, step
-    - aria-label
-3. Ensure `options` includes:
-    - label: The visible text for the option.
-    - value: The value associated with the option, if available.
-    - disabled: Whether the option is disabled.
-    - class: The CSS class of the option, if available.
-4. Return an empty list `[]` for `options` if no options are present, and an empty dictionary `{}` for `attributes` if no attributes are found.
+1. Always return `field_type`, `attributes`, and `options` keys, even if one of them is empty.
+2. Ensure `field_type` clearly specifies the type of field:
+   - `"select"` for a regular `<select>` element.
+   - `"multiselect"` for a `<select>` element with the `multiple` attribute.
+   - `"input"` followed by the value of the `type` attribute for `<input>` elements (e.g., `"input-text"`, `"input-email"`, `"input-checkbox"`).
+3. Ensure `attributes` contains all relevant HTML attributes, like:
+   - id
+   - class
+   - name
+   - type
+   - placeholder
+   - maxlength
+   - min, max, step
+   - aria-label
+4. Ensure `options` includes:
+   - label: The visible text for the option.
+   - value: The value associated with the option, if available.
+   - disabled: Whether the option is disabled.
+   - class: The CSS class of the option, if available.
+5. Return an empty list `[]` for `options` if no options are present, and an empty dictionary `{}` for `attributes` if no attributes are found.
 
-### Example (attributes with options):
+### Example (select element with options):
 
+```json
 {
+  "field_type": "select",
   "attributes": {
     "id": "exampleID",
     "class": "exampleClass",
-    "type": "select",
-    "placeholder": "Enter value",
-    "maxlength": "10"
+    "name": "dropdown"
   },
   "options": [
-    {"label": "Option 1", "value": "1", "disabled": false, "class": "optionExampleClass"},
-    {"label": "Option 2", "value": "2", "disabled": true, "class": "optionExampleClass"}
+    {"label": "Option 1", "value": "1", "disabled": false, "class": "optionClass"},
+    {"label": "Option 2", "value": "2", "disabled": true, "class": "optionClass"}
   ]
 }
 
-### Example (attributes without options):
-
-{
-  "attributes": {
-    "id": "exampleID",
-    "class": "exampleClass",
-    "type": "text",
-    "placeholder": "Enter your name",
-    "maxlength": "50"
-  },
-  "options": []
-}
-
-### Example (options without attributes):
-
-{
-  "attributes": {},
-  "options": [
-    {"label": "Option 1", "value": "1", "disabled": false, "class": "optionExampleClass"},
-    {"label": "Option 2", "value": "2", "disabled": true, "class": "optionExampleClass"}
-  ]
-}
-
-Return the data in a **consistent** JSON format following these guidelines, without any extra or unnecessary information.
 """
 
 FILTER_ELEMENT_IDENTIFIERS_PROMPT = """
@@ -92,7 +73,7 @@ Explicitly **ignore any modified or internal classes** within these containers, 
 ### Strictly ignore the following:
 - Containers with IDs or classes related to ratings, reviews, discussions, or subjective evaluations of datasets. For example:
     - Containers with "rate", "rating", "review", "feedback", "comment", "discussion", "quality", or "comprehensible" in their ID or class.
-    - Specifically ignore containers with IDs or classes, such as:
+    - Specifically ignore containers with IDs or classes, like:
       - "datasetQuality"
       - "comprehensibleData"
       - "ordenacao-discussao"
