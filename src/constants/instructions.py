@@ -97,11 +97,6 @@ json
 }
 """
 
-
-
-
-
-
 ACTION_ELEMENT_IDENTIFIERS_PROMPT = """
 Analyze the HTML and extract only the clickable elements related to form submission, page redirection, or actions that may be present on the page. Focus on identifying buttons, links, or other clickable elements that trigger actions. Additionally, capture any descriptive text associated with these elements and identify the parent container they are wrapped in. Ignore banners, footers, navbars, decorative elements, purely aesthetic elements such as titles, pagination elements, and non-clickable content.
 
@@ -172,37 +167,41 @@ Analyze the provided HTML and identify if there are any elements (buttons, links
 ### Example (download button with file format):
 
 {
-  "attributes": {
-    "id": "downloadBtn1",
-    "class": "btn-download",
-    "label": "Download Data",
-    "format": "CSV"
-  },
-  "download_format": "CSV",
-  "container": {
-    "id": "downloadContainer",
-    "class": "container-class"
-  }
+    "downloadable_elements": [
+      "attributes": {
+        "id": "downloadBtn1",
+        "class": "btn-download",
+        "label": "Download Data",
+        "format": "CSV"
+      },
+      "download_format": "CSV",
+      "container": {
+        "id": "downloadContainer",
+        "class": "container-class"
+      }
+    ]
 }
 
 ### Example (download link without explicit label):
 
 {
-  "attributes": {
-    "id": "downloadLink1",
-    "class": "link-download",
-    "format": "JSON"
-  },
-  "download_format": "JSON",
-  "container": {
-    "id": "container2",
-    "class": "another-container-class"
-  }
+    "downloadable_elements": [
+      "attributes": {
+        "id": "downloadLink1",
+        "class": "link-download",
+        "format": "JSON"
+      },
+      "download_format": "JSON",
+      "container": {
+        "id": "container2",
+        "class": "another-container-class"
+      }
+    ]
 }
 
 ### Example (multiple download options):
 
-[
+"downloadable_elements": [
   {
     "attributes": {
       "id": "downloadBtn1",
