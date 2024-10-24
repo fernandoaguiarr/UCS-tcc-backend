@@ -6,6 +6,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
+import settings
+
 
 def get_browser_options(state_manager_id: UUID4) -> Options:
     chrome_options = webdriver.ChromeOptions()
@@ -18,7 +20,7 @@ def get_browser_options(state_manager_id: UUID4) -> Options:
 
     os.makedirs(f"{settings.MEDIA_ROOT}/{state_manager_id}/", exist_ok=True)
     prefs = {
-        "download.default_directory": os.path.join(os.getcwd(), f"temp/{state_manager_id}/"),
+        "download.default_directory": os.path.join(os.getcwd(), f"{settings.MEDIA_ROOT}/{state_manager_id}/"),
         "download.prompt_for_download": False,
         "directory_upgrade": True,
         "safebrowsing.enabled": True,
