@@ -6,7 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
-import settings
+from settings import MEDIA_ROOT
 
 
 def get_browser_options(state_manager_id: UUID4) -> Options:
@@ -18,9 +18,11 @@ def get_browser_options(state_manager_id: UUID4) -> Options:
     chrome_options.add_argument('--allow-running-insecure-content')
     chrome_options.add_argument('--window-size=1920,1080')
 
-    os.makedirs(f"{settings.MEDIA_ROOT}/{state_manager_id}/", exist_ok=True)
+    path = os.path.join(MEDIA_ROOT, str(state_manager_id))
+    os.makedirs(path, exist_ok=True)
+
     prefs = {
-        "download.default_directory": os.path.join(os.getcwd(), f"{settings.MEDIA_ROOT}/{state_manager_id}/"),
+        "download.default_directory": path,
         "download.prompt_for_download": False,
         "directory_upgrade": True,
         "safebrowsing.enabled": True,
