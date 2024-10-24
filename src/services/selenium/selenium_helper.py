@@ -44,7 +44,7 @@ class SeleniumHelper:
         self.driver.get(url)
         self.wait()
 
-    def switch_window(self, tab: int):
+    def switch_window(self, tab: int = -1):
         self.driver.switch_to.window(self.driver.window_handles[tab])
 
     def get_open_windows_length(self):
