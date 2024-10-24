@@ -63,7 +63,7 @@ class SeleniumHelper:
         time.sleep(secs)
 
     def wait_for_download_completion(self, state_manager_id: UUID4):
-        download_dir = os.path.join(os.getcwd(), f"temp/{state_manager_id}")
+        download_dir = os.path.join(MEDIA_ROOT, str(state_manager_id))
         """
         Aguarda a conclusão do download no diretório especificado.
         Retorna True se o arquivo foi baixado com sucesso antes do timeout, False caso contrário.
