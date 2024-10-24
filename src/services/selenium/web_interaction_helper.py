@@ -1,4 +1,5 @@
-from pydantic.v1 import UUID4
+from uuid import UUID
+
 from selenium.common import ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -10,7 +11,7 @@ from src.services.selenium.selenium_helper import SeleniumHelper
 
 class WebInteractionHelper(SeleniumHelper):
 
-    def __init__(self, state_manager_id: UUID4):
+    def __init__(self, state_manager_id: UUID):
         super().__init__(state_manager_id)
 
     @staticmethod
@@ -25,6 +26,16 @@ class WebInteractionHelper(SeleniumHelper):
     def fill_input_field(element: WebElement, value):
         element.clear()
         element.send_keys(value)
+
+    @staticmethod
+    def create_default_xpath_sentence(attributes, function: str = "contains") -> str | None:
+        if "id" in attributes and attributes["id"]:
+            return f"{function}(@id, '{attributes['id']}')"
+
+        elif "class" in attributes and attributes["class"]:
+            return f"{function}(@class, '{attributes['class']}')"
+
+        return None
 
     def wait_for_element_presence_by_id(self, element_id: str, timeout: float = 10):
         return WebDriverWait(self.driver, timeout).until(
@@ -46,3 +57,6 @@ class WebInteractionHelper(SeleniumHelper):
 
     def remove_inline_styles(self, element: WebElement):
         self.driver.execute_script("arguments[0].removeAttribute('style');", element)
+
+    def click_using_javascript(self, element):
+        self.driver.execute_script("arguments[0].click();", element)
