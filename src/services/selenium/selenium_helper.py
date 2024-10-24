@@ -16,6 +16,7 @@ def get_browser_options(state_manager_id: UUID4) -> Options:
     chrome_options.add_argument('--allow-running-insecure-content')
     chrome_options.add_argument('--window-size=1920,1080')
 
+    os.makedirs(f"{settings.MEDIA_ROOT}/{state_manager_id}/", exist_ok=True)
     prefs = {
         "download.default_directory": os.path.join(os.getcwd(), f"temp/{state_manager_id}/"),
         "download.prompt_for_download": False,
@@ -27,10 +28,6 @@ def get_browser_options(state_manager_id: UUID4) -> Options:
     chrome_options.add_experimental_option("prefs", prefs)
 
     return chrome_options
-
-
-def wait(secs: float = 10):
-    time.sleep(secs)
 
 
 class SeleniumHelper:
@@ -61,8 +58,7 @@ class SeleniumHelper:
     def wait(secs: float = 10):
         time.sleep(secs)
 
-    @staticmethod
-    def wait_for_download_completion(state_manager_id: UUID4):
+    def wait_for_download_completion(self, state_manager_id: UUID4):
         download_dir = os.path.join(os.getcwd(), f"temp/{state_manager_id}")
         """
         Aguarda a conclusão do download no diretório especificado.
@@ -81,7 +77,7 @@ class SeleniumHelper:
                 return True
 
             # Espera 1 segundo e verifica novamente
-            wait(1)
+            self.wait(1)
 
         # Se o timeout for atingido e o download não tiver sido concluído
         return False
