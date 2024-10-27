@@ -17,6 +17,7 @@ def get_browser_options(state_manager_id: UUID4) -> Options:
     chrome_options.add_argument('--ignore-certificate-errors')
     chrome_options.add_argument('--allow-running-insecure-content')
     chrome_options.add_argument('--window-size=1920,1080')
+    chrome_options.add_argument("--disable-popup-blocking")
 
     path = os.path.join(MEDIA_ROOT, str(state_manager_id))
     os.makedirs(path, exist_ok=True)
