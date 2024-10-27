@@ -69,3 +69,5 @@ w3lib==2.2.1
 websocket-client==1.8.0
 wsproto==1.2.0
 zope.interface==7.1.0
+python-magic~=0.4.27
+chardet~=5.2.0
