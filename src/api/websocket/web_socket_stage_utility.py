@@ -7,8 +7,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../")
 from src.services.chunk import count_tokens, create_chunks
 from src.services.openai_client import OpenAIClient
 from src.services.selenium.web_interaction_helper import WebInteractionHelper
-from src.constants.instructions import FILTER_ELEMENT_IDENTIFIERS_PROMPT, HTML_FILTER_ANALYSIS_INSTRUCTION, \
-    ACTION_ELEMENT_IDENTIFIERS_PROMPT, DATA_DOWNLOAD_ANALYSIS_INSTRUCTION
+from src.constants.instructions import HTML_FILTER_CONTAINER_IDENTIFIERS, HTML_FORM_FIELD_ANALYSIS, \
+    HTML_ACTIONABLE_ELEMENT_ANALYSIS
 
 
 def merge_dicts(d1, d2):
@@ -42,7 +42,7 @@ class WebSocketStageUtility:
         for chunk in chunks:
             openai_response = self.openai_client.send_to_openai(
                 text=chunk,
-                instruction=FILTER_ELEMENT_IDENTIFIERS_PROMPT
+                instruction=HTML_FILTER_CONTAINER_IDENTIFIERS
             )
 
             openai_response = json.loads(openai_response)["filter_identifiers"]
@@ -75,7 +75,7 @@ class WebSocketStageUtility:
             for chunk in chunks:
                 openai_response = self.openai_client.send_to_openai(
                     text=chunk,
-                    instruction=HTML_FILTER_ANALYSIS_INSTRUCTION,
+                    instruction=HTML_FORM_FIELD_ANALYSIS,
                     model=self.openai_client.model
                 )
 
@@ -89,10 +89,10 @@ class WebSocketStageUtility:
     def get_action_identifiers(self, html: str) -> list:
         openai_response = self.openai_client.send_to_openai(
             text=html,
-            instruction=ACTION_ELEMENT_IDENTIFIERS_PROMPT
+            instruction=HTML_ACTIONABLE_ELEMENT_ANALYSIS
         )
 
-        return json.loads(openai_response)["action_identifiers"]
+        return json.loads(openai_response)["actions"]
 
     def handle_field_interaction(self, field):
         attributes = field["attributes"]
