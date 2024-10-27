@@ -36,6 +36,57 @@ class WebSocketStageUtility:
         self.openai_client = openai_client
         self.web_interaction_helper = web_interaction_helper
 
+    def search_for_fields(self, url: str):
+        self.web_interaction_helper.load_page(url)
+        self.web_interaction_helper.wait()
+
+        beautiful_soup_manager = BeautifulSoupManager(self.web_interaction_helper.get_html_element("body"))
+        beautiful_soup_manager.clean_soup(
+            attributes_to_remove=["style", "data-select", "data-selected", "data-deselect", "tabindex"],
+            tags_to_remove=["script", "style", "head", "meta", "noscript", "footer", "header", "svg", "iframe", "p",
+                            "i"]
+        )
+
+        page_content = beautiful_soup_manager.beautiful_soup_to_str(minify=True)
+
+        # Criar chunks
+        response_tokens = 5000
+        max_tokens_model = 200000
+        instruction_tokens = count_tokens(HTML_FILTER_CONTAINER_IDENTIFIERS, self.openai_client.model)
+
+        chunks = create_chunks(
+            text=page_content,
+            max_chunk_size=(max_tokens_model - response_tokens - instruction_tokens),
+            model=self.openai_client.model
+        )
+
+        print("Total chunks: {}".format(len(chunks)))
+
+        fields_identifiers = self.get_fields_identifiers(chunks)
+
+        # Caso não sejam encontrados campos de filtro, avançar para o próximo estágio
+        if not len(fields_identifiers):
+            return {
+                "jump_next_stage": ApplicationStage.SEND_ADDITIONAL_INFO.value,
+                "data": {
+                    "url": url,
+                    "fields": fields_identifiers
+                }
+            }
+
+        html_fields = beautiful_soup_manager.extract_unique_html_elements(
+            search_criteria=[dict(identifier) for identifier in fields_identifiers]
+        )
+
+        fields = self.get_fields(html_fields)
+
+        return {
+            "stage": ApplicationStage.REQUEST_ADDITIONAL_INFO.value,
+            "data": {
+                "fields": fields
+            }
+        }
+
     def get_fields_identifiers(self, chunks: list[str]) -> set:
         fields = set()
 

@@ -43,42 +43,16 @@ class WebSocketStageManager(WebSocketStageUtility):
 
         return actions.get(stage, self.handle_error)()
 
-    def send_initial_url(self, url: str = None):
-        self.init_crawling_manager()
+    def send_initial_url(self):
+        print("Sending initial url...")
         self.current_stage = ApplicationStage.SEND_INITIAL_URL
-        page_content = clean_html(self.crawling_manager.start(url=url if url else self.data["url"]))
+        response = self.search_for_fields(self.data["url"])
 
-        # Criar chunks
-        response_tokens = 5000
-        max_tokens_model = 200000
-        instruction_tokens = count_tokens(FILTER_ELEMENT_IDENTIFIERS_PROMPT, self.openai_client.model)
+        if "jump_next_stage" in response and response["jump_next_stage"]:
+            self.data = response["data"]
+            return self.handle_stage(response["jump_next_stage"])
 
-        chunks = create_chunks(
-            text=page_content,
-            max_chunk_size=(max_tokens_model - response_tokens - instruction_tokens),
-            model=self.openai_client.model
-        )
-
-        print("Total chunks: {}".format(len(chunks)))
-
-        fields_identifiers = self.get_fields_identifiers(chunks)
-
-        # Caso não sejam encontrados campos de filtro, avançar para o próximo estágio
-        if not len(fields_identifiers):
-            self.data["fields"] = []
-            return self.send_additional_info()
-
-        html_fields = get_html_elements(page_content, [dict(identifier) for identifier in fields_identifiers])
-        fields = self.get_fields(html_fields)
-
-        print(fields)
-
-        return {
-            "stage": ApplicationStage.REQUEST_ADDITIONAL_INFO.value,
-            "data": {
-                "fields": fields
-            }
-        }
+        return response
 
     def request_additional_info(self):
         print("Requesting additional info...")
