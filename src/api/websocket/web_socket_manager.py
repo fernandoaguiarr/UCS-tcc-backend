@@ -13,7 +13,7 @@ class WebSocketManager:
     def __init__(self):
         self.connections = []
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket) -> WebSocketStageManager:
         await websocket.accept()
 
         connection = {
@@ -25,5 +25,7 @@ class WebSocketManager:
         return connection["stageManager"]
 
     def disconnect(self, websocket: WebSocket):
-        # self.connections.remove(websocket)
-        pass
+        self.connections = [
+            conn for conn in self.connections
+            if conn["websocket"] != websocket
+        ]

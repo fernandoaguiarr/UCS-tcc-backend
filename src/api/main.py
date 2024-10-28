@@ -1,8 +1,6 @@
 import os
 import sys
 import json
-import time
-import asyncio
 
 from fastapi import FastAPI, WebSocket
 from starlette.responses import HTMLResponse
@@ -69,7 +67,6 @@ async def get():
                                     'class':'multiselect',
                                     'field_id':3,
                                     'id':'multiSelectPalavraChave'
-                                    'value':input.value
                                 }
                             ]
                         }
@@ -97,7 +94,6 @@ async def websocket_endpoint(websocket: WebSocket):
                 # Sempre que receber um novo estágio mandar ao usuário o estágio WAITING
                 response = state_manager.handle_stage(ApplicationStage.WAITING.value)
                 await websocket.send_text(f"{response}")
-                await asyncio.sleep(1)
 
                 response = state_manager.handle_stage(data["stage"])
                 state_manager.previous_data = data["data"]
