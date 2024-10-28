@@ -2,16 +2,16 @@ import sys
 import os
 import uuid
 
+from settings import MEDIA_ROOT, SUPPORTED_TYPE_FILES
+from src.services.beautiful_soup_manager import BeautifulSoupManager
+
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../")
 
 from src.services.openai_client import OpenAIClient
 from src.services.crawling_manager import CrawlingManager
-from src.services.chunk import count_tokens, create_chunks
 from src.constants.enums.application_stage import ApplicationStage
-from src.constants.instructions import FILTER_ELEMENT_IDENTIFIERS_PROMPT
 from src.api.websocket.web_socket_stage_utility import WebSocketStageUtility
 from src.services.selenium.web_interaction_helper import WebInteractionHelper
-from src.services.html_parser import clean_html, get_html_elements, remove_elements_by_class_name
 
 
 class WebSocketStageManager(WebSocketStageUtility):
@@ -26,6 +26,7 @@ class WebSocketStageManager(WebSocketStageUtility):
         self.data = None
         self.current_stage = None
         self.crawling_manager = None
+        self.download_dir = os.path.join(MEDIA_ROOT, str(self.state_manager_id))
 
     def init_crawling_manager(self):
         if not self.crawling_manager:
@@ -62,9 +63,12 @@ class WebSocketStageManager(WebSocketStageUtility):
         print("Sending additional info...")
         self.current_stage = ApplicationStage.SEND_ADDITIONAL_INFO
 
-        self.web_interaction_helper.load_page(self.data["url"])
+        if self.web_interaction_helper.driver.current_url != self.data["url"]:
+            self.web_interaction_helper.load_page(self.data["url"])
 
-        if "fields" in self.data and len(self.data["fields"]):
+        beautiful_soup_manager = BeautifulSoupManager(self.web_interaction_helper.get_html_element("body"))
+
+        if "fields" in self.data:
             fields_to_remove = set()
 
             for field in self.data["fields"]:
@@ -72,35 +76,66 @@ class WebSocketStageManager(WebSocketStageUtility):
                 fields_to_remove.add(field["attributes"]["class"])
 
             self.web_interaction_helper.wait()
-            html_page = self.web_interaction_helper.get_html_element("body")
+            beautiful_soup_manager = BeautifulSoupManager(self.web_interaction_helper.get_html_element("body"))
 
             for field in fields_to_remove:
-                html_page = remove_elements_by_class_name(html_page, field)
+                beautiful_soup_manager.remove_element_by_class(field, remove_all=True)
 
-            html_page = clean_html(html_page)
+        if not "selected_action" in self.data:
+            beautiful_soup_manager.clean_soup(
+                attributes_to_remove=["style", "data-select", "data-selected", "data-deselect", "tabindex"],
+                tags_to_remove=["script", "style", "head", "meta", "noscript", "footer", "header", "svg", "iframe", "p",
+                                "i"],
+            )
 
-            actions = self.get_action_identifiers(html_page)
+            actions = self.get_action_identifiers(
+                beautiful_soup_manager.beautiful_soup_to_str(minify=True)
+            )
 
-            if len(actions):
-                print(actions)
+            redirect_actions = [action for action in actions if action["action_type"] == "redirect"]
+            download_actions = [
+                action for action in actions
+                if action["action_type"] == "download" and
+                   ("download_format" in action and action["download_format"].lower() in SUPPORTED_TYPE_FILES)
+            ]
+
+            print(download_actions)
+
+            if len(download_actions):
+                for download_action in download_actions:
+                    self.handle_download_element(download_action, self.download_dir)
+
+                return {
+                    "stage": ApplicationStage.REQUEST_DATA_DETAILS.value,
+                    "data": {
+                        "subsets": self.handle_downloaded_data(self.download_dir)
+                    }
+                }
+            elif len(redirect_actions):
                 return {
                     "stage": ApplicationStage.REQUEST_ADDITIONAL_INFO.value,
                     "data": {
-                        "actions": actions
+                        "actions": redirect_actions
                     }
                 }
+        else:
+            # Quando o usuário escolhe uma ação, o processo deve reiniciar :)
+            should_switch_window = self.handle_selected_action(self.data["selected_action"])
 
-            # Segue em busca do download...
-            # return self.send_additional_info()
-        elif "selected_action" in self.data:
-            url = self.handle_selected_action(self.data["selected_action"])
+            with open("test.html", 'w') as file:
+                file.write(self.web_interaction_helper.get_html_element("body"))
 
-            if url != self.data["url"]:
-                self.data["url"] = url
-                # Aqui precisa verificar se tem filtros
-                pass
+            if should_switch_window:
+                self.web_interaction_helper.switch_window()
+                self.web_interaction_helper.wait()
 
-            self.get_download_elements()
+                self.data["url"] = self.web_interaction_helper.driver.current_url
+                return self.handle_stage(ApplicationStage.SEND_INITIAL_URL.value)
+
+            # Volta para o estado inicial, porém numa nova página, ou com o seu conteúdo atualizado
+            # Verificar se o fluxo tá certo, quando é um botão de submit
+            del self.data["selected_action"]
+            return self.handle_stage(ApplicationStage.SEND_ADDITIONAL_INFO.value)
 
     def request_data_details(self):
         print("Requesting data details...")

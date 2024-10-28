@@ -1,11 +1,19 @@
-import json
-import sys
 import os
+import sys
+import json
+
+import magic
+from selenium.common import TimeoutException
+
+from settings import SUPPORTED_MIME_TYPE_FILES
+from src.services.beautiful_soup_manager import BeautifulSoupManager
+from src.services.file_data_manager import FileDataManager
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../")
 
-from src.services.chunk import count_tokens, create_chunks
 from src.services.openai_client import OpenAIClient
+from src.services.chunk import count_tokens, create_chunks
+from src.constants.enums.application_stage import ApplicationStage
 from src.services.selenium.web_interaction_helper import WebInteractionHelper
 from src.constants.instructions import HTML_FILTER_CONTAINER_IDENTIFIERS, HTML_FORM_FIELD_ANALYSIS, \
     HTML_ACTIONABLE_ELEMENT_ANALYSIS
@@ -97,7 +105,6 @@ class WebSocketStageUtility:
             )
 
             openai_response = json.loads(openai_response)["filter_identifiers"]
-
             for _field in openai_response:
                 sorted_field = tuple(sorted(_field.items()))
                 fields.add(sorted_field)
@@ -151,7 +158,7 @@ class WebSocketStageUtility:
         if attributes["id"]:
             element = self.web_interaction_helper.wait_for_element_presence_by_id(attributes["id"])
         else:
-            xpath = "//*[contains(@class, 'search-result')]"
+            xpath = f"//*[contains(@class, '{attributes["class"]}')]"
             element = self.web_interaction_helper.wait_for_element_presence_by_xpath(xpath)
 
         # Remover css para evitar elementos escondidos
@@ -171,7 +178,7 @@ class WebSocketStageUtility:
                     if "class" in option and option["class"]:
                         xpath = f".//*[contains(@class, '{option['class']}') and contains(., '{value}')]"
                     else:
-                        xpath = f".//*[contains(., '{value}')]"
+                        xpath = f".//*[contains(text(), '{value}')]"
 
                     option_element = self.web_interaction_helper.wait_for_element_presence_by_xpath(xpath)
                     self.web_interaction_helper.click(option_element)
@@ -182,34 +189,72 @@ class WebSocketStageUtility:
             self.web_interaction_helper.fill_input_field(element, attributes["value"])
             return
 
-    def handle_selected_action(self, action):
-        # print(self.web_interaction_helper.get_html_element("body"))
+    def handle_selected_action(self, action) -> bool:
         if "id" in action and action["id"]:
             element = self.web_interaction_helper.wait_for_element_presence_by_id(action["id"])
-        elif "container_class" and action["container_class"]:
-            xpath = f".//*[contains(@class, '{action['container_class']}') and contains(., '{action["text"]}')]"
-            print(xpath)
-            element = self.web_interaction_helper.wait_for_element_presence_by_xpath(xpath)
         else:
-            xpath = f".//*[contains(@class, '{action['class']}') and contains(., '{action["text"]}')]"
+            xpath = f".//*[contains(@class, '{action['class']}') and contains(normalize-space(.), '{action['text'].strip()}')]"
             element = self.web_interaction_helper.wait_for_element_presence_by_xpath(xpath)
 
         open_windows_length = self.web_interaction_helper.get_open_windows_length()
 
-        self.web_interaction_helper.click(element)
+        if not self.web_interaction_helper.click(element):
+            self.web_interaction_helper.click_using_javascript(element)
+
         self.web_interaction_helper.wait()
 
-        if self.web_interaction_helper.get_open_windows_length() > open_windows_length:
-            self.web_interaction_helper.switch_window(-1)
+        return self.web_interaction_helper.get_open_windows_length() > open_windows_length
 
-        return self.web_interaction_helper.driver.current_url
+    def handle_download_element(self, download_action, download_dir: str):
+        element_xpath = self.web_interaction_helper.create_default_xpath_sentence(download_action)
+        xpath_tag = f"{download_action['tag'] if 'tag' in download_action else '*'}"
 
-    def get_download_elements(self):
-        page_content = self.web_interaction_helper.get_html_element("body")
+        if "download_format" in download_action and download_action["download_format"]:
+            xpath = (f"//*[normalize-space(text()) = '{download_action['download_format']}']"
+                     f"/following::{xpath_tag}[{element_xpath}][1]")
+        else:
+            xpath = f"//{xpath_tag}[{element_xpath}]"
 
-        download_elements = self.openai_client.send_to_openai(
-            text=page_content,
-            instruction=DATA_DOWNLOAD_ANALYSIS_INSTRUCTION
-        )
+        try:
+            # Caso o xpath com o download_format não funcione, faz a busca com o normal
+            element = self.web_interaction_helper.wait_for_element_presence_by_xpath(xpath)
+        except TimeoutException:
+            xpath = f"//{xpath_tag}[{element_xpath}]"
+            element = self.web_interaction_helper.wait_for_element_presence_by_xpath(xpath)
 
-        print(download_elements)
+        if not self.web_interaction_helper.click(element):
+            self.web_interaction_helper.click_using_javascript(element)
+
+        self.web_interaction_helper.wait(1)
+        self.web_interaction_helper.wait_for_download_completion(download_dir)
+
+    @staticmethod
+    def handle_downloaded_data(download_dir):
+
+        file_data_manager = FileDataManager()
+        samples = []
+        zip_files = [
+            os.path.join(download_dir, filename)
+            for filename in os.listdir(download_dir)
+            if os.path.isfile(os.path.join(download_dir, filename)) and magic.from_file(
+                os.path.join(download_dir, filename), mime=True) == "application/zip"
+        ]
+
+        for zip_file in zip_files:
+            file_data_manager.unpack_file(zip_file, download_dir)
+            file_data_manager.delete_file(zip_file)
+
+        for file_name in os.listdir(download_dir):
+            file_path = f"{download_dir}/{file_name}"
+            mime = magic.from_file(file_path, mime=True)
+
+            if mime in SUPPORTED_MIME_TYPE_FILES:
+                df = file_data_manager.open_file(file_path, mime)
+
+                if isinstance(df, dict):
+                    continue
+
+                df = file_data_manager.create_sample(df)
+                samples.append(file_data_manager.convert_dataframe_to_json(df))
+
+        return samples
