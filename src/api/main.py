@@ -2,11 +2,14 @@ import os
 import sys
 import json
 
+import magic
 from fastapi import FastAPI, WebSocket
-from starlette.responses import HTMLResponse
+from starlette.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.websockets import WebSocketDisconnect
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../")
+from settings import MEDIA_ROOT
 
 from src.constants.enums.application_stage import ApplicationStage
 from src.api.websocket.web_socket_manager import WebSocketManager
@@ -102,3 +105,16 @@ async def websocket_endpoint(websocket: WebSocket):
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+
+@app.get("/download/{session_id}/{file_name}")
+async def download_file(session_id: str, file_name: str):
+    file_path = os.path.join(MEDIA_ROOT, session_id, file_name)
+    if os.path.exists(file_path):
+        return FileResponse(
+            path=file_path,
+            filename=file_name,
+            media_type=magic.from_file(file_path, mime=True)
+        )
+    else:
+        return {"Error": "Arquivo não encontrado"}
