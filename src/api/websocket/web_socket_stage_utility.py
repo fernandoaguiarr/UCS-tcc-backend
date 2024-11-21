@@ -91,6 +91,7 @@ class WebSocketStageUtility:
         return {
             "stage": ApplicationStage.REQUEST_ADDITIONAL_INFO.value,
             "data": {
+                "url": url,
                 "fields": fields
             }
         }
@@ -138,9 +139,12 @@ class WebSocketStageUtility:
                 )
 
                 openai_response = json.loads(openai_response)
-                field_dict = merge_dicts(field_dict, openai_response)
 
-            fields.append(field_dict)
+                if "field" in openai_response:
+                    field_dict = merge_dicts(field_dict, openai_response["field"])
+
+            if field_dict:
+                fields.append(field_dict)
 
         return fields
 
@@ -255,7 +259,7 @@ class WebSocketStageUtility:
                     continue
 
                 df = file_data_manager.create_sample(df)
-                samples.append(file_data_manager.convert_dataframe_to_json(df))
+                samples.append({**file_data_manager.convert_dataframe_to_json(df), "file_name": file_name})
 
         return samples
 
