@@ -120,6 +120,8 @@ class WebSocketStageManager(WebSocketStageUtility):
                         "actions": redirect_actions
                     }
                 }
+            else:
+                return self.handle_error("Não foram encontradas possíveis ações e locais de download")
         else:
             # Quando o usuário escolhe uma ação, o processo deve reiniciar :)
             should_switch_window = self.handle_selected_action(self.data["selected_action"])
@@ -169,6 +171,11 @@ class WebSocketStageManager(WebSocketStageUtility):
     def handle_error(self, message: str = None):
         print("Handling error...")
         self.current_stage = ApplicationStage.ERROR
+
+        return {
+            "stage": ApplicationStage.ERROR.value,
+            "message": message if message else "Ocorreu um erro inesperado."
+        }
 
     def waiting(self):
         print("Waiting stage")
