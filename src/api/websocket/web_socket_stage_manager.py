@@ -8,7 +8,6 @@ from src.services.beautiful_soup_manager import BeautifulSoupManager
 sys.path.append(os.path.dirname(os.path.abspath(__file__)) + "/../../../")
 
 from src.services.openai_client import OpenAIClient
-from src.services.crawling_manager import CrawlingManager
 from src.constants.enums.application_stage import ApplicationStage
 from src.api.websocket.web_socket_stage_utility import WebSocketStageUtility
 from src.services.selenium.web_interaction_helper import WebInteractionHelper
@@ -27,10 +26,6 @@ class WebSocketStageManager(WebSocketStageUtility):
         self.current_stage = None
         self.crawling_manager = None
         self.download_dir = os.path.join(MEDIA_ROOT, str(self.state_manager_id))
-
-    def init_crawling_manager(self):
-        if not self.crawling_manager:
-            self.crawling_manager = CrawlingManager()
 
     def handle_stage(self, stage):
         actions = {
