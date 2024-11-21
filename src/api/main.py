@@ -96,12 +96,12 @@ async def websocket_endpoint(websocket: WebSocket):
             if data["stage"]:
                 # Sempre que receber um novo estágio mandar ao usuário o estágio WAITING
                 response = state_manager.handle_stage(ApplicationStage.WAITING.value)
-                await websocket.send_text(f"{response}")
+                await websocket.send_json(response)
 
                 response = state_manager.handle_stage(data["stage"])
                 state_manager.previous_data = data["data"]
                 print("Ending of stage")
-                await websocket.send_text(f"{response}")
+                await websocket.send_json(response)
 
     except WebSocketDisconnect:
         manager.disconnect(websocket)
