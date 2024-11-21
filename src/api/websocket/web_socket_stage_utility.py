@@ -258,3 +258,47 @@ class WebSocketStageUtility:
                 samples.append(file_data_manager.convert_dataframe_to_json(df))
 
         return samples
+
+    @staticmethod
+    def prepare_data_to_export(download_dir, export_format: str, files):
+        file_data_manager = FileDataManager()
+
+        url_files = []
+
+        for file in files:
+            file_name = file["file_name"].split(".")[0]
+            file_path = f"{download_dir}/{file['file_name']}"
+            encoding = file_data_manager.get_encoding(file_path)
+            dataframe = file_data_manager.open_file(file_path, magic.from_file(file_path, mime=True))
+
+            columns_to_rename = {}
+            columns = []
+
+            for header in file["headers"]:
+                if header["new_name"]:
+                    columns_to_rename[header["old_name"]] = header["new_name"]
+
+                columns.append(header["new_name"] if header["new_name"] else header["old_name"])
+
+            if len(columns_to_rename.keys()):
+                dataframe = file_data_manager.rename_dataframe_columns(dataframe, columns_to_rename)
+            try:
+                output_file_name = f"{file_name}_transformed.{export_format}"
+                output_path = f"{download_dir}/{file_name}_transformed.{export_format}"
+                file_data_manager.export_dataframe(
+                    dataframe=dataframe,
+                    columns=columns,
+                    path= output_path,
+                    export_format=export_format,
+                    encoding=encoding
+                )
+
+                url_files.append({
+                    "file_name":output_file_name,
+                    "url":f"{download_dir.split("/")[-1]}/{output_file_name}"
+                })
+            except:
+                continue
+
+
+        return url_files
