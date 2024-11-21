@@ -17,71 +17,18 @@ from src.api.websocket.web_socket_manager import WebSocketManager
 app = FastAPI()
 manager = WebSocketManager()
 
+origins = [
+    "http://localhost",
+    "http://localhost:8080",
+]
 
-@app.get("/")
-async def get():
-    html = """
-    <!DOCTYPE html>
-    <html>
-        <head>
-            <title>Chat</title>
-        </head>
-        <body>
-            <h1>WebSocket Chat</h1>
-            <form action="" onsubmit="sendMessage(event)">
-                <input type="text" id="messageText" value="https://dados.gov.br/dados/conjuntos-dados" autocomplete="off"/>
-                <button>Send</button>
-            </form>
-            
-            <form action="" onsubmit="sendFilters(event)">
-                <input type="text" id="filterText" autocomplete="off"/>
-                <button>Send</button>
-            </form>
-            <ul id='messages'>
-            </ul>
-            <script>
-                var ws = new WebSocket("ws://127.0.0.1:8000/ws");
-                ws.onmessage = function(event) {
-                    var messages = document.getElementById('messages')
-                    var message = document.createElement('li')
-                    var content = document.createTextNode(event.data)
-                    console.log(event.data)
-                    message.appendChild(content)
-                    messages.appendChild(message)
-                };
-                function sendMessage(event) {
-                    var input = document.getElementById("messageText")
-                    ws.send(JSON.stringify({
-                        'stage':'SEND_INITIAL_URL',
-                        'data': {
-                            'url': input.value
-                        }
-                    }))
-                    event.preventDefault()
-                }
-                
-                function sendFilters(event){
-                   var input = document.getElementById("filterText")
-                    ws.send(JSON.stringify({
-                        'stage':'SEND_ADDITIONAL_INFO',
-                        'data': {
-                            'filters': [
-                                {
-                                    'class':'multiselect',
-                                    'field_id':3,
-                                    'id':'multiSelectPalavraChave'
-                                }
-                            ]
-                        }
-                    })) 
-                     event.preventDefault()
-                }
-            </script>
-        </body>
-    </html>
-    """
-
-    return HTMLResponse(html)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 
 @app.websocket("/ws")
