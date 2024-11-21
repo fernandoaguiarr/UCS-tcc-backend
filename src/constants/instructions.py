@@ -35,18 +35,19 @@ Analyze the provided HTML form elements and return their attributes, options, an
 
 ```json
 {
-  "field_type": "select",
-  "attributes": {
-    "id": "exampleID",
-    "class": "exampleClass",
-    "name": "dropdown"
-  },
-  "options": [
-    {"label": "Option 1", "value": "1", "disabled": false, "class": "optionClass"},
-    {"label": "Option 2", "value": "2", "disabled": true, "class": "optionClass"}
-  ]
+    "field":{
+      "field_type": "select",
+      "attributes": {
+        "id": "exampleID",
+        "class": "exampleClass",
+        "name": "dropdown"
+      },
+      "options": [
+        {"label": "Option 1", "value": "1", "disabled": false, "class": "optionClass"},
+        {"label": "Option 2", "value": "2", "disabled": true, "class": "optionClass"}
+      ]
+    }
 }
-
 """
 
 HTML_FILTER_CONTAINER_IDENTIFIERS = """
@@ -99,7 +100,7 @@ json
 HTML_ACTIONABLE_ELEMENT_ANALYSIS = """
 Analyze the HTML and extract elements related to **form submission, page redirection, actions**, or **data downloads**. Focus on identifying buttons, links, or other clickable elements that trigger actions or initiate downloads. Additionally, capture any descriptive text associated with these elements.
 
-1. id: Extract the ID of the clickable element itself, not of its parent or surrounding elements. Focus on the element where the action is directly initiated, such as the `<a>` tag.
+1. id: Extract the ID of the clickable element itself, not of its parent or surrounding elements. Focus on the element where the action is directly initiated, such as the <a> tag.
 2. class: Extract the class name of the **clickable element**, but ignore any child or modified elements with classes like "__disabled" or "--hidden".
 3. tag: Identify the type of the clickable element (e.g., <a>, <button>, <input[type='submit']>, <input[type='button']>, or similar interactive elements).
 4. text: Extract the descriptive text or label associated with the clickable element (e.g., button text, link text).
@@ -117,11 +118,11 @@ Analyze the HTML and extract elements related to **form submission, page redirec
   - Static or non-interactive content.
 
 ### Explicitly ignore the following:
-- **Ignore `<form>` tags** themselves unless analyzing the **buttons or inputs within them** that are directly related to form submission actions:
-  - Focus only on `<button>` elements or `<input>` elements with `type="submit"` or `type="button"` inside the form.
-  - Do not consider the `<form>` tag as an action by itself.
+- **Ignore <form> tags** themselves unless analyzing the **buttons or inputs within them** that are directly related to form submission actions:
+  - Focus only on <button> elements or <input> elements with type="submit" or type="button" inside the form.
+  - Do not consider the <form> tag as an action by itself.
 - **Ignore form elements** that are not directly related to form submission actions:
-  - Exclude elements like `<select>`, `<textarea>`, `<input>` (including `type="text"`, `type="checkbox"`, `type="radio"`, `type="search"`, etc.), unless they are of `type="submit"` or `type="button"`.
+  - Exclude elements like <select>, <textarea>, <input> (including type="text", type="checkbox", type="radio", type="search", etc.), unless they are of type="submit" or type="button".
 - **Ignore elements related to cookies or consent management**:
   - Ignore any elements or containers that include IDs, classes, other attributes, or visible text containing terms like:
     - "cookie", "consent", "accept", "reject", "agree", "decline", "cookie-banner", "cookie-settings", "privacy-policy", "gdpr", "compliance", or any variations of these terms.
@@ -174,3 +175,4 @@ json
   ]
 }
 """
+
