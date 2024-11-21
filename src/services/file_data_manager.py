@@ -1,9 +1,13 @@
 import csv
 import os
+import uuid
+
+import numpy as np
 import pandas as pd
 import zipfile
 import chardet
 from pandas import DataFrame
+from sqlalchemy import create_engine
 
 
 class FileDataManager:
@@ -71,3 +75,30 @@ class FileDataManager:
             "headers": headers,
             "values": dataframe.to_dict(orient="records")
         }
+
+    @staticmethod
+    def rename_dataframe_columns(dataframe: DataFrame, columns) -> DataFrame:
+        return dataframe.rename(columns=columns)
+
+    @staticmethod
+    def export_dataframe(dataframe:DataFrame, columns: list[str], path:str,  export_format:str, encoding:str):
+
+        if export_format == "csv":
+            dataframe.to_csv(path_or_buf=path, sep=";", columns=columns, index=False, encoding=encoding)
+        elif export_format == "json":
+            dataframe.to_json(path_or_buf=path, force_ascii=False)
+        elif export_format == "sql":
+            engine = create_engine('sqlite:///:memory:')
+            table_name = f"temp_{uuid.uuid4().hex}"
+            dataframe.to_sql(table_name, con=engine, if_exists='replace', index=False)
+
+            with engine.connect() as conn:
+                result = conn.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'")
+                create_table_sql = result.fetchone()[0]
+                insert_statements = [f"INSERT INTO {table_name} VALUES ({', '.join(map(repr, row))});" for row in dataframe.values]
+
+            # Salvando o script SQL em um arquivo
+            with open(path, 'w') as file:
+                file.write(create_table_sql + ";\n")
+                file.writelines(f"{stmt}\n" for stmt in insert_statements)
+
