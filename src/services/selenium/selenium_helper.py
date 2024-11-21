@@ -27,11 +27,10 @@ def get_browser_options(state_manager_id: UUID4) -> Options:
         "download.prompt_for_download": False,
         "directory_upgrade": True,
         "safebrowsing.enabled": True,
-        "profile.default_content_setting_values.automatic_downloads": 1
+        "profile.managed_default_content_settings.javascript": 1
     }
 
     chrome_options.add_experimental_option("prefs", prefs)
-
     return chrome_options
 
 
