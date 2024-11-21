@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from selenium.common import ElementNotInteractableException
+from selenium.common import ElementNotInteractableException, ElementClickInterceptedException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions
@@ -20,6 +20,8 @@ class WebInteractionHelper(SeleniumHelper):
             element.click()
             return True
         except ElementNotInteractableException:
+            return False
+        except ElementClickInterceptedException:
             return False
 
     @staticmethod
