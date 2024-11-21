@@ -71,6 +71,8 @@ class FileDataManager:
     @staticmethod
     def convert_dataframe_to_json(dataframe: DataFrame) -> dict:
         headers = dataframe.columns.tolist()
+        dataframe = dataframe.replace({np.nan: None})
+
         return {
             "headers": headers,
             "values": dataframe.to_dict(orient="records")
