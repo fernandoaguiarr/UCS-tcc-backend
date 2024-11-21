@@ -40,6 +40,7 @@ class WebSocketStageManager(WebSocketStageUtility):
             ApplicationStage.REQUEST_DATA_DETAILS.value: self.request_data_details,
             ApplicationStage.SEND_DATA_DETAILS.value: self.send_data_details,
             ApplicationStage.WAITING.value: self.waiting,
+            ApplicationStage.COMPLETED.value: self.completed,
         }
 
         return actions.get(stage, self.handle_error)()
@@ -111,6 +112,7 @@ class WebSocketStageManager(WebSocketStageUtility):
                         "subsets": self.handle_downloaded_data(self.download_dir)
                     }
                 }
+
             elif len(redirect_actions):
                 return {
                     "stage": ApplicationStage.REQUEST_ADDITIONAL_INFO.value,
@@ -122,8 +124,8 @@ class WebSocketStageManager(WebSocketStageUtility):
             # Quando o usuário escolhe uma ação, o processo deve reiniciar :)
             should_switch_window = self.handle_selected_action(self.data["selected_action"])
 
-            with open("test.html", 'w') as file:
-                file.write(self.web_interaction_helper.get_html_element("body"))
+            # with open("test.html", 'w') as file:
+            #     file.write(self.web_interaction_helper.get_html_element("body"))
 
             if should_switch_window:
                 self.web_interaction_helper.switch_window()
@@ -145,7 +147,26 @@ class WebSocketStageManager(WebSocketStageUtility):
         print("Sending data details...")
         self.current_stage = ApplicationStage.SEND_DATA_DETAILS
 
-    def handle_error(self):
+        if not "format" in self.data:
+            return self.handle_error("Formato da exportação dos dados ausente.")
+        if not self.data["format"].lower() in SUPPORTED_TYPE_FILES:
+            return self.handle_error("O Formato da exportação dos dados escolhido não é suportado.")
+
+        return {
+            "stage": ApplicationStage.COMPLETED.value,
+            "data": {
+                "url_files": self.prepare_data_to_export(self.download_dir, self.data["format"], self.data["subsets"])
+            }
+        }
+
+    def completed(self):
+        self.current_stage = ApplicationStage.COMPLETED
+
+        return {
+            "stage": ApplicationStage.COMPLETED.value
+        }
+
+    def handle_error(self, message: str = None):
         print("Handling error...")
         self.current_stage = ApplicationStage.ERROR
 
