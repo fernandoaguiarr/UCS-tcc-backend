@@ -112,6 +112,7 @@ class WebSocketStageManager(WebSocketStageUtility):
                 return {
                     "stage": ApplicationStage.REQUEST_ADDITIONAL_INFO.value,
                     "data": {
+                        "url": self.web_interaction_helper.driver.current_url,
                         "actions": redirect_actions
                     }
                 }
