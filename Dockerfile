@@ -1,13 +1,6 @@
 FROM selenium/standalone-chrome:latest
 LABEL authors="fernando"
 
-#USER root  # Garante permissões de superusuário
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    python3-dev \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
 WORKDIR /code
 
 COPY ./requirements.txt /code/requirements.txt
