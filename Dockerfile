@@ -12,6 +12,7 @@ WORKDIR /code
 
 # Copiar dependências e código da aplicação
 COPY ./requirements.txt /code/requirements.txt
+COPY ./settings.py /code/settings.py
 RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 COPY ./src /code/src
 
