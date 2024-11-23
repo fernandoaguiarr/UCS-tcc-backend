@@ -1,8 +1,6 @@
 FROM python:3.12
 LABEL authors="fernando"
 
-USER root
-
 RUN apt-get update && apt-get install -y \
     wget\
     fonts-liberation \
