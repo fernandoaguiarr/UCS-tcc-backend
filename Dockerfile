@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     libxfixes3 \
     libxkbcommon0 \
     libxrandr2 \
-    xdg-utils \
+    xdg-utils
 
 
 RUN wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
