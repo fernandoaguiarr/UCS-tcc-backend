@@ -3,6 +3,16 @@ LABEL authors="fernando"
 
 USER root
 
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    python3-venv \
+    python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verificar se o venv está disponível
+RUN python3 -m ensurepip --upgrade
+
 WORKDIR /code
 
 COPY ./requirements.txt /code/requirements.txt
