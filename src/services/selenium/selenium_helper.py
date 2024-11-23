@@ -8,10 +8,9 @@ from selenium.webdriver.chrome.options import Options
 
 from settings import MEDIA_ROOT
 
-
 def get_browser_options(state_manager_id: UUID4) -> Options:
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("--headless=chrome")  # Executa em modo headless
+    chrome_options.add_argument("--headless")  # Executa em modo headless
     # chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     chrome_options.add_argument('--ignore-certificate-errors')
