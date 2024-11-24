@@ -40,7 +40,10 @@ async def websocket_endpoint(websocket: WebSocket):
             data = json.loads(await websocket.receive_text())
             state_manager.data = data["data"]
 
-            if data["stage"]:
+            if "new_extraction" in data["data"] and data["data"]["new_extraction"]:
+                state_manager.clear_user_download_folder()
+
+            if "stage" in data and data["stage"]:
                 # Sempre que receber um novo estágio mandar ao usuário o estágio WAITING
                 response = state_manager.handle_stage(ApplicationStage.WAITING.value)
                 await websocket.send_json(response)
@@ -51,6 +54,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json(response)
 
     except WebSocketDisconnect:
+        state_manager.clear_user_download_folder(True)
         manager.disconnect(websocket)
 
 
