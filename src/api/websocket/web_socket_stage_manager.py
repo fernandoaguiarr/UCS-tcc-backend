@@ -122,8 +122,15 @@ class WebSocketStageManager(WebSocketStageUtility):
             # Quando o usuário escolhe uma ação, o processo deve reiniciar :)
             should_switch_window = self.handle_selected_action(self.data["selected_action"])
 
-            # with open("test.html", 'w') as file:
-            #     file.write(self.web_interaction_helper.get_html_element("body"))
+            # Verificar se alguma ação não baixou algo
+            self.web_interaction_helper.wait_for_download_completion(self.download_dir)
+            if len(os.listdir(self.download_dir)):
+                return {
+                    "stage": ApplicationStage.REQUEST_DATA_DETAILS.value,
+                    "data": {
+                        "subsets": self.handle_downloaded_data(self.download_dir)
+                    }
+                }
 
             if should_switch_window:
                 self.web_interaction_helper.switch_window()
@@ -177,3 +184,10 @@ class WebSocketStageManager(WebSocketStageUtility):
         print("Waiting stage")
         self.current_stage = ApplicationStage.WAITING
         return {"stage": ApplicationStage.WAITING.value}
+
+    def clear_user_download_folder(self, remove_folder: bool = False):
+        for file in os.listdir(self.download_dir):
+            os.remove(f"{self.download_dir}/{file}")
+
+        if remove_folder:
+            os.rmdir(self.download_dir)
