@@ -185,3 +185,10 @@ class WebSocketStageManager(WebSocketStageUtility):
         print("Waiting stage")
         self.current_stage = ApplicationStage.WAITING
         return {"stage": ApplicationStage.WAITING.value}
+
+    def clear_user_download_folder(self, remove_folder: bool = False):
+        for file in os.listdir(self.download_dir):
+            os.remove(f"{self.download_dir}/{file}")
+
+        if remove_folder:
+            os.rmdir(self.download_dir)
