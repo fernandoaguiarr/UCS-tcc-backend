@@ -12,7 +12,7 @@ from sqlalchemy import create_engine
 
 class FileDataManager:
 
-    def open_file(self, path: str, mime_type: str) -> DataFrame:
+    def open_file(self, path: str, mime_type: str, samples: bool = False) -> DataFrame:
         actions = {
             "text/csv": self._read_csv_file,
             "text/plain": self._read_csv_file,
@@ -22,7 +22,7 @@ class FileDataManager:
             "application/xml": self._read_xml_file
         }
 
-        return actions.get(mime_type, self._unsupported_file)(path)
+        return actions.get(mime_type, self._unsupported_file)(path, samples)
 
     @staticmethod
     def get_encoding(path: str) -> str:
@@ -39,29 +39,45 @@ class FileDataManager:
     def delete_file(file_path: str):
         os.remove(file_path)
 
-    def _read_csv_file(self, path: str) -> DataFrame:
+    def _read_csv_file(self, path: str, samples: bool = False) -> DataFrame:
         encoding = self.get_encoding(path)
         with open(path, 'r', encoding=encoding) as f:
             amostra = f.readline()  # Lê uma amostra para detecção
             sniffer = csv.Sniffer()
             delimiter = sniffer.sniff(amostra).delimiter
 
-        return pd.read_csv(path, delimiter=delimiter, encoding=encoding, dtype=str)
+        df = pd.read_csv(path, delimiter=delimiter, encoding=encoding, dtype=str)
+
+        if not samples:
+            return df
+        return df.head(10)
 
     @staticmethod
-    def _read_excel_file(path: str) -> DataFrame:
-        return pd.read_excel(path)
+    def _read_excel_file(path: str, samples: bool = False) -> DataFrame:
+        df = pd.read_excel(path)
+
+        if not samples:
+            return df
+        return df.head(10)
 
     @staticmethod
-    def _read_json_file(path: str) -> DataFrame:
-        return pd.read_json(path)
+    def _read_json_file(path: str, samples: bool = False) -> DataFrame:
+        df = pd.read_json(path)
+
+        if not samples:
+            return df
+        return df.head(10)
 
     @staticmethod
-    def _read_xml_file(path: str) -> DataFrame:
-        return pd.read_xml(path)
+    def _read_xml_file(path: str, samples: bool = False) -> DataFrame:
+        df = pd.read_xml(path)
+
+        if not samples:
+            return df
+        return df.head(10)
 
     @staticmethod
-    def _unsupported_file(path: str):
+    def _unsupported_file(path: str, samples: bool = False):
         return {"error": f"Unsupported file type for {path}"}
 
     @staticmethod
@@ -83,7 +99,7 @@ class FileDataManager:
         return dataframe.rename(columns=columns)
 
     @staticmethod
-    def export_dataframe(dataframe:DataFrame, columns: list[str], path:str,  export_format:str, encoding:str):
+    def export_dataframe(dataframe: DataFrame, columns: list[str], path: str, export_format: str, encoding: str):
 
         if export_format == "csv":
             dataframe.to_csv(path_or_buf=path, sep=";", columns=columns, index=False, encoding=encoding)
@@ -97,10 +113,10 @@ class FileDataManager:
             with engine.connect() as conn:
                 result = conn.execute(f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table_name}'")
                 create_table_sql = result.fetchone()[0]
-                insert_statements = [f"INSERT INTO {table_name} VALUES ({', '.join(map(repr, row))});" for row in dataframe.values]
+                insert_statements = [f"INSERT INTO {table_name} VALUES ({', '.join(map(repr, row))});" for row in
+                                     dataframe.values]
 
             # Salvando o script SQL em um arquivo
             with open(path, 'w') as file:
                 file.write(create_table_sql + ";\n")
                 file.writelines(f"{stmt}\n" for stmt in insert_statements)
-

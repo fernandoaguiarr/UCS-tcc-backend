@@ -95,16 +95,17 @@ class WebSocketStageManager(WebSocketStageUtility):
                    ("download_format" in action and action["download_format"].lower() in SUPPORTED_TYPE_FILES)
             ]
 
-            print(download_actions)
-
             if len(download_actions):
                 for download_action in download_actions:
                     self.handle_download_element(download_action, self.download_dir)
 
+                subsets = self.handle_downloaded_data(self.download_dir)
+                self.web_interaction_helper.quit()
+
                 return {
                     "stage": ApplicationStage.REQUEST_DATA_DETAILS.value,
                     "data": {
-                        "subsets": self.handle_downloaded_data(self.download_dir)
+                        "subsets": subsets
                     }
                 }
 
@@ -124,7 +125,10 @@ class WebSocketStageManager(WebSocketStageUtility):
 
             # Verificar se alguma ação não baixou algo
             self.web_interaction_helper.wait_for_download_completion(self.download_dir)
+
             if len(os.listdir(self.download_dir)):
+                self.web_interaction_helper.quit()
+
                 return {
                     "stage": ApplicationStage.REQUEST_DATA_DETAILS.value,
                     "data": {

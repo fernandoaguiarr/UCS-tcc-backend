@@ -1,3 +1,4 @@
+import gc
 import os
 import sys
 import json
@@ -234,7 +235,6 @@ class WebSocketStageUtility:
 
     @staticmethod
     def handle_downloaded_data(download_dir):
-
         file_data_manager = FileDataManager()
         samples = []
         zip_files = [
@@ -253,13 +253,21 @@ class WebSocketStageUtility:
             mime = magic.from_file(file_path, mime=True)
 
             if mime in SUPPORTED_MIME_TYPE_FILES:
-                df = file_data_manager.open_file(file_path, mime)
+                df = file_data_manager.open_file(file_path, mime, True)
 
-                if isinstance(df, dict):
-                    continue
+                if isinstance(df, dict): continue
 
                 df = file_data_manager.create_sample(df)
                 samples.append({**file_data_manager.convert_dataframe_to_json(df), "file_name": file_name})
+
+                del df
+
+            del file_path, mime
+
+            gc.collect()
+
+        del file_data_manager
+        gc.collect()
 
         return samples
 
@@ -292,17 +300,24 @@ class WebSocketStageUtility:
                 file_data_manager.export_dataframe(
                     dataframe=dataframe,
                     columns=columns,
-                    path= output_path,
+                    path=output_path,
                     export_format=export_format,
                     encoding=encoding
                 )
 
+                del dataframe
+                gc.collect()
+
                 url_files.append({
-                    "file_name":output_file_name,
-                    "url":f"{download_dir.split("/")[-1]}/{output_file_name}"
+                    "file_name": output_file_name,
+                    "url": f"{download_dir.split("/")[-1]}/{output_file_name}"
                 })
             except:
+                del dataframe
+                gc.collect()
                 continue
 
+        del file_data_manager
+        gc.collect()
 
         return url_files
