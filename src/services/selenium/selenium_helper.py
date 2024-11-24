@@ -3,6 +3,7 @@ import time
 
 from pydantic import UUID4
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 
@@ -11,10 +12,10 @@ from settings import MEDIA_ROOT
 
 def get_browser_options(state_manager_id: UUID4) -> Options:
     chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument("--headless=chrome")  # Executa em modo headless
-    # chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--headless")  # Executa em modo headless
+    chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument('--ignore-certificate-errors')
+    # chrome_options.add_argument('--ignore-certificate-errors')
     chrome_options.add_argument('--allow-running-insecure-content')
     chrome_options.add_argument('--window-size=1920,1080')
     chrome_options.add_argument("--disable-popup-blocking")
@@ -31,13 +32,17 @@ def get_browser_options(state_manager_id: UUID4) -> Options:
     }
 
     chrome_options.add_experimental_option("prefs", prefs)
+    chrome_options.binary_location = "/usr/bin/chromium"
     return chrome_options
 
 
 class SeleniumHelper:
 
     def __init__(self, state_manager_id: UUID4):
-        self.driver = webdriver.Chrome(get_browser_options(state_manager_id))
+        self.driver = webdriver.Chrome(
+            service=Service("/usr/bin/chromedriver"),
+            options=get_browser_options(state_manager_id)
+        )
 
     def quit(self):
         self.driver.quit()
