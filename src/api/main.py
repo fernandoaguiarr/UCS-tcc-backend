@@ -38,20 +38,21 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             data = json.loads(await websocket.receive_text())
-            state_manager.data = data["data"]
+            if "data" in data:
+                state_manager.data = data["data"]
 
-            if "new_extraction" in data["data"] and data["data"]["new_extraction"]:
-                state_manager.clear_user_download_folder()
+                if "new_extraction" in data["data"] and data["data"]["new_extraction"]:
+                    state_manager.clear_user_download_folder()
 
-            if "stage" in data and data["stage"]:
-                # Sempre que receber um novo estágio mandar ao usuário o estágio WAITING
-                response = state_manager.handle_stage(ApplicationStage.WAITING.value)
-                await websocket.send_json(response)
+                if "stage" in data and data["stage"]:
+                    # Sempre que receber um novo estágio mandar ao usuário o estágio WAITING
+                    response = state_manager.handle_stage(ApplicationStage.WAITING.value)
+                    await websocket.send_json(response)
 
-                response = state_manager.handle_stage(data["stage"])
-                state_manager.previous_data = data["data"]
-                print("Ending of stage")
-                await websocket.send_json(response)
+                    response = state_manager.handle_stage(data["stage"])
+                    state_manager.previous_data = data["data"]
+                    print("Ending of stage")
+                    await websocket.send_json(response)
 
     except WebSocketDisconnect:
         state_manager.clear_user_download_folder(True)
